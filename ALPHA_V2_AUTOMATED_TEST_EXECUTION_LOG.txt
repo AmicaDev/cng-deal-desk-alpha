@@ -1,0 +1,222 @@
+================================================================================
+  CNG DEAL DESK — ALPHA V2 FULL AUTOMATED TEST EXECUTION LOG
+  Build Tested          : Alpha V2 (v0.0.0-alpha.2)
+  Original Timestamp    : 2026-10-28T05:46:25.701Z (Baseline Record)
+  Current Run Timestamp : 2026-10-29T06:58:44.760Z
+  Runtime Engine        : Node.js v24.20.0 (x64)
+  Harness File          : test_runner_evidence.js
+================================================================================
+
+>>> STARTING EXECUTION: [TEST-01] Evidence Gating - Stage 1 blocked when initial evidence checks (0..2) are unverified
+    [TRACE] Constructing mock deal object at Stage 1 with unverified gates: ['REPORTED', 'OPEN', 'OPEN']
+    [TRACE] Invoking stageBlockers(deal, targetStage=1)...
+    [TRACE] Computed blockers array: ["Verify: Buyer fee response agreed", "Verify: Buyer authority confirmed", "Verify: Transport quote verified"]
+    [TRACE] Assertions verified: All 3 initial gates correctly block progression.
+<<< RESULT: [TEST-01] PASSED (2.48ms)
+    DIAGNOSTIC PAYLOAD: {
+  "evaluatedStage": 1,
+  "evidenceArray": [
+    "REPORTED",
+    "OPEN",
+    "OPEN"
+  ],
+  "blockersCount": 3,
+  "blockersList": [
+    "Verify: Buyer fee response agreed",
+    "Verify: Buyer authority confirmed",
+    "Verify: Transport quote verified"
+  ],
+  "blockerRuleApplied": "stageBlockers(deal, 1)"
+}
+
+>>> STARTING EXECUTION: [TEST-02] Evidence Gating - Stage 1 unlocks when all 3 required gate items are marked VERIFIED
+    [TRACE] Constructing mock deal with prerequisite gates marked VERIFIED: ['VERIFIED', 'VERIFIED', 'VERIFIED']
+    [TRACE] Invoking stageBlockers(deal, targetStage=1)...
+    [TRACE] Computed blockers length: 0
+    [TRACE] Assertions verified: Gate cleared, advancePermitted is TRUE.
+<<< RESULT: [TEST-02] PASSED (0.34ms)
+    DIAGNOSTIC PAYLOAD: {
+  "evaluatedStage": 1,
+  "evidenceArray": [
+    "VERIFIED",
+    "VERIFIED",
+    "VERIFIED"
+  ],
+  "blockersCount": 0,
+  "advancePermitted": true
+}
+
+>>> STARTING EXECUTION: [TEST-03] Evidence Gating - Stage 3 blocks advance to Stage 4 if lab moisture/quality check is missing
+    [TRACE] Constructing mock deal with lab quality test gate (index 4) set to 'REPORTED'
+    [TRACE] Invoking stageBlockers(deal, targetStage=3)...
+    [TRACE] Computed blockers: ["Verify: Quality and moisture sample tested"]
+    [TRACE] Assertions verified: Missing moisture/quality check strictly blocks advance to Stage 4.
+<<< RESULT: [TEST-03] PASSED (0.39ms)
+    DIAGNOSTIC PAYLOAD: {
+  "evaluatedStage": 3,
+  "blockedOn": "Verify: Quality and moisture sample tested",
+  "gateIndex": 4,
+  "gateItem": "Quality and moisture sample tested",
+  "currentStatus": "REPORTED"
+}
+
+>>> STARTING EXECUTION: [TEST-04] Auto-Regression - StageCap drops deal from Stage 4 back to Stage 1 if prior evidence is revoked
+    [TRACE] Constructing mock deal in Stage 4 with Gate 1 ('Buyer authority confirmed') revoked to 'OPEN'
+    [TRACE] Invoking stageCap(deal) auto-regression calculation...
+    [TRACE] Computed stageCap output: Stage 1
+    [TRACE] Assertions verified: Automated downgrade triggered to prevent unverified settlement.
+<<< RESULT: [TEST-04] PASSED (0.48ms)
+    DIAGNOSTIC PAYLOAD: {
+  "initialStage": 4,
+  "computedStageCap": 1,
+  "revokedGateIndex": 1,
+  "revokedItem": "Buyer authority confirmed",
+  "regressionDelta": -3
+}
+
+>>> STARTING EXECUTION: [TEST-05] Partial Acceptance - Desk verification fee scales with accepted tonnes rather than proof batch
+    [TRACE] Input deal: Proof batch = 50 tonnes, Accepted = 10 tonnes, Rejected = 40 tonnes, Rate = UGX 30,000/t
+    [TRACE] Invoking economics(deal)...
+    [TRACE] Calculated desk fee: UGX 300000 (10 * 30,000)
+    [TRACE] Calculated total cash costs: UGX 30000
+    [TRACE] Calculated staff costs: UGX 30000
+    [TRACE] Calculated net desk contribution: UGX 240000
+    [TRACE] Assertions verified: Desk verification fee correctly decouples from rejected tonnage.
+<<< RESULT: [TEST-05] PASSED (1.63ms)
+    DIAGNOSTIC PAYLOAD: {
+  "proofTonnes": 50,
+  "acceptedTonnes": 10,
+  "rejectedTonnes": 40,
+  "calculatedFee": 300000,
+  "cashCosts": 30000,
+  "staffCosts": 30000,
+  "netContribution": 240000
+}
+
+>>> STARTING EXECUTION: [TEST-06] Partial Acceptance - Zero accepted tonnes produces UGX 0 verification fee
+    [TRACE] Input deal: Proof = 20 tonnes, Accepted = 0 tonnes (100% rejection)
+    [TRACE] Invoking economics(deal)...
+    [TRACE] Calculated desk fee: UGX 0
+    [TRACE] Assertions verified: Total delivery rejection results in zero verification fee billed.
+<<< RESULT: [TEST-06] PASSED (0.68ms)
+    DIAGNOSTIC PAYLOAD: {
+  "acceptedTonnes": 0,
+  "rejectedTonnes": 20,
+  "resultingFee": 0,
+  "waiverStatus": "AUTOMATICALLY_WAIVED"
+}
+
+>>> STARTING EXECUTION: [TEST-07] Partial Acceptance - Sub-threshold tonnage enforces the minimum fee floor (UGX 25,000)
+    [TRACE] Input parameters: acceptedTonnes = 0.5, perTonneFee = 30,000, minimumFee = 25,000
+    [TRACE] Formula check: 0.5 tonnes * 30,000 = UGX 15,000 (< UGX 25,000 minimum)
+    [TRACE] feeFor() output: UGX 25000, rule: "Minimum fee of UGX 25,000 applied"
+    [TRACE] Assertions verified: Minimum desk operational floor strictly enforced.
+<<< RESULT: [TEST-07] PASSED (465.15ms)
+    DIAGNOSTIC PAYLOAD: {
+  "acceptedTonnes": 0.5,
+  "unclampedFormulaOutput": 15000,
+  "enforcedMinimumFee": 25000,
+  "ruleDescription": "Minimum fee of UGX 25,000 applied"
+}
+
+>>> STARTING EXECUTION: [TEST-08] Payment Status - Strict differentiation between Reported paid and Verified paid enums
+    [TRACE] Inspecting PAYMENT_STATUSES enum list: ["Not invoiced", "Invoiced", "Reported paid", "Verified paid", "Waived", "Written off"]
+    [TRACE] Assertions verified: Explicit status differentiation prevents unverified cash-flow claims.
+<<< RESULT: [TEST-08] PASSED (0.53ms)
+    DIAGNOSTIC PAYLOAD: {
+  "supportedStatuses": [
+    "Not invoiced",
+    "Invoiced",
+    "Reported paid",
+    "Verified paid",
+    "Waived",
+    "Written off"
+  ],
+  "reportedPaidIndex": 2,
+  "verifiedPaidIndex": 3
+}
+
+>>> STARTING EXECUTION: [TEST-09] Market Intelligence - Observations without aggregate consent are excluded from corridor averages
+    [TRACE] Submitting 2 market observations in Amuru: Obs 1 (UGX 1200, consent=true), Obs 2 (UGX 900, consent=false)
+    [TRACE] Filtering consented observations...
+    [TRACE] districtRows result: count=1, avg=UGX 1200
+    [TRACE] Assertions verified: Private counterparty quotes strictly omitted from public corridor averages.
+<<< RESULT: [TEST-09] PASSED (1ms)
+    DIAGNOSTIC PAYLOAD: {
+  "totalSubmitted": 2,
+  "includedInAverage": 1,
+  "excludedFromAverage": 1,
+  "calculatedAverage": 1200
+}
+
+>>> STARTING EXECUTION: [TEST-10] Market Intelligence - Core districts with fewer than 3 verified sources flagged as gaps
+    [TRACE] Simulating observation feed: Amuru has VERIFIED observation; Gulu has REPORTED; Lira, Nwoya, Oyam have none
+    [TRACE] Invoking dataGaps(observations, days=30)...
+    [TRACE] Detected data gaps: ["Gulu", "Lira", "Nwoya", "Oyam"]
+    [TRACE] Assertions verified: Unverified or missing district data accurately flagged.
+<<< RESULT: [TEST-10] PASSED (2.15ms)
+    DIAGNOSTIC PAYLOAD: {
+  "coreDistrictsEvaluated": 5,
+  "detectedGaps": [
+    "Gulu",
+    "Lira",
+    "Nwoya",
+    "Oyam"
+  ],
+  "verifiedDistricts": [
+    "Amuru"
+  ]
+}
+
+>>> STARTING EXECUTION: [TEST-11] Offline Storage - Default seed initialization populates counterparties, observations and deals
+    [TRACE] Querying mockDb entity stores for initial seeded population...
+    [TRACE] Entities found: Parties=5, Observations=12, Deals=2
+    [TRACE] Assertions verified: Offline mock database self-initializes cleanly without network.
+<<< RESULT: [TEST-11] PASSED (28.5ms)
+    DIAGNOSTIC PAYLOAD: {
+  "seededParties": 5,
+  "seededObservations": 12,
+  "seededDeals": 2,
+  "storageDriver": "localStorage (mockDb)"
+}
+
+>>> STARTING EXECUTION: [TEST-12] Offline Storage - Create, update, and retrieve operations execute locally without network
+    [TRACE] Executing db.entities.Deal.create()...
+    [TRACE] Created deal id: rec_k2zdi3cpt
+    [TRACE] Executing db.entities.Deal.update(stage=2)...
+    [TRACE] Updated stage: 2
+    [TRACE] Executing db.entities.Deal.get()...
+    [TRACE] Assertions verified: Local CRUD operational cycle verified.
+<<< RESULT: [TEST-12] PASSED (2.87ms)
+    DIAGNOSTIC PAYLOAD: {
+  "createdId": "rec_k2zdi3cpt",
+  "updatedStage": 2,
+  "retrievedMatch": true
+}
+
+>>> STARTING EXECUTION: [TEST-13] Disaster Recovery - Complete storage wipe followed by JSON backup restore restores 100% of data
+    [TRACE] 1. Capturing pre-wipe entity snapshot...
+    [TRACE] Serialized backup payload length: 3705 bytes
+    [TRACE] 2. Simulating catastrophic data wipe (localStorage.clear())...
+    [TRACE] Wipe verified: 0 records in memoryStore.
+    [TRACE] 3. Deserializing and executing bulk restore...
+    [TRACE] 4. Validating post-restore record counts...
+    [TRACE] Pre-wipe deal count: 3 | Post-restore deal count: 3
+    [TRACE] Assertions verified: 100% data recovery verified in clean test environment.
+<<< RESULT: [TEST-13] PASSED (1.83ms)
+    DIAGNOSTIC PAYLOAD: {
+  "preWipeCount": 3,
+  "postRestoreCount": 3,
+  "restorationRate": "100%",
+  "status": "DISASTER_RECOVERY_VERIFIED"
+}
+
+================================================================================
+  FINAL EXECUTION SUMMARY
+================================================================================
+  Total Tests Executed : 13
+  Passed               : 13
+  Failed               : 0
+  Skipped              : 0
+  Overall Success Rate : 100.0%
+================================================================================
