@@ -16,3 +16,4 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     storageKey: "cng_supabase_auth_token",
   },
 });
+

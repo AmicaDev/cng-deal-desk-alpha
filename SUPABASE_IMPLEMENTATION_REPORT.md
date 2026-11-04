@@ -170,3 +170,4 @@ Created `vercel.json`:
 }
 ```
 Ensures direct browser navigation and page refresh on routes such as `/review`, `/registry`, `/deals/:id`, and `/data` resolve to `index.html` without 404 errors.
+

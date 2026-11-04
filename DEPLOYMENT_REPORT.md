@@ -72,3 +72,4 @@ Because GitHub is already connected to your Vercel project:
    - `VITE_SUPABASE_URL` = `https://kwivtzoimfvnhovrdrcz.supabase.co`
    - `VITE_SUPABASE_ANON_KEY` = `sb_publishable_mjzEppyM3rRgj8zpTVCLSA_LHiChrv2`
 4. The deployment status can be monitored in the Vercel Dashboard under **Deployments**.
+

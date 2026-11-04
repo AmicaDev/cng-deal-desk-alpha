@@ -265,3 +265,4 @@ export async function migrateLocalStorageToSupabase(currentUser) {
     throw fatal;
   }
 }
+

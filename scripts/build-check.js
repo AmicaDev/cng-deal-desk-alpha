@@ -75,3 +75,4 @@ if (hasErrors) {
 } else {
   console.log("\n>>> BUILD INTEGRITY CHECK PASSED (100% production ready)");
 }
+

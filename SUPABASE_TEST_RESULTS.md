@@ -67,3 +67,4 @@
   - Git repository initialized on branch `main`.
   - Initial migration commit `cbc3ec1` staged and committed locally.
   - Adding the remote URL and pushing requires user confirmation of the exact remote repository name. See `DEPLOYMENT_REPORT.md`.
+
