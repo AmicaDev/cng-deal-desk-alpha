@@ -1,6 +1,26 @@
 {
   "version": 2,
   "outputDirectory": ".",
+  "headers": [
+    {
+      "source": "/assets/auth/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/assets/(.*)",
@@ -12,4 +32,3 @@
     }
   ]
 }
-

@@ -17,6 +17,18 @@ const ROOT_ID = "root";
 const AUTH_ID = "cng-auth-root";
 const AUTH_PATHS = new Set(["/login", "/register", "/logout"]);
 let logoutButton;
+let reactAppPromise = null;
+
+// Ensure the React application bundle is loaded
+function ensureReactBundle() {
+  if (!reactAppPromise) {
+    reactAppPromise = import("../index-A159RRyL.js").catch((err) => {
+      console.error("Failed to load React bundle:", err);
+      throw err;
+    });
+  }
+  return reactAppPromise;
+}
 
 // Install the production Supabase database adapter on globalThis.__B44_DB__
 function installSupabaseAdapter() {
@@ -75,19 +87,22 @@ function navigate(path) {
 async function onLogin(credentials) {
   const user = await login(credentials);
   if (user) {
-    // Check and trigger background migration if offline records exist
     if (await checkMigrationNeeded()) {
       migrateLocalStorageToSupabase(user).catch((err) => {
         console.warn("Background migration encountered notice:", err);
       });
     }
+    const returnTo = sessionStorage.getItem("cng_return_to") || "/";
+    sessionStorage.removeItem("cng_return_to");
+    window.location.replace(returnTo);
   }
-  window.location.replace("/");
 }
 
 async function onRegister(userData) {
   await register(userData);
-  window.location.replace("/");
+  const returnTo = sessionStorage.getItem("cng_return_to") || "/";
+  sessionStorage.removeItem("cng_return_to");
+  window.location.replace(returnTo);
 }
 
 async function renderCurrentPath() {
@@ -133,10 +148,23 @@ async function renderCurrentPath() {
   if (authRoot) authRoot.hidden = true;
 
   if (!loggedIn) {
-    await requireAuthenticatedUser();
+    if (root) root.hidden = true;
+    if (authRoot) {
+      authRoot.hidden = false;
+      sessionStorage.setItem("cng_return_to", path);
+      if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+        window.history.replaceState({ redirectedFrom: path }, "", "/login");
+      }
+      renderLoginPage(authRoot, {
+        onLogin,
+        onRegister: () => navigate("/register"),
+      });
+    }
     return;
   }
 
+  // User is authenticated: ensure React bundle is mounted
+  await ensureReactBundle();
   if (root) root.hidden = false;
 }
 
@@ -152,9 +180,7 @@ async function initialize() {
   document.body.append(authRoot);
   addStyles();
 
-  // Load the React application bundle
-  await import("../index-A159RRyL.js");
-
+  // Create logout button
   logoutButton = createLogoutButton(async () => {
     await logout();
     window.location.replace("/login");
@@ -163,6 +189,12 @@ async function initialize() {
   document.body.append(logoutButton);
 
   window.addEventListener("popstate", renderCurrentPath);
+
+  // Pre-load React bundle in background
+  ensureReactBundle().catch((e) => {
+    console.warn("React bundle preload notice:", e.message);
+  });
+
   await renderCurrentPath();
 }
 
@@ -182,7 +214,10 @@ initialize().catch((error) => {
       </div>
       <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 8px;">Initialization Notice</h2>
       <p style="color: #64748b; font-size: 14px; max-width: 440px; margin: 0 auto 20px;">${error?.message || "Please reload to reconnect."}</p>
-      <button onclick="window.location.reload()" style="background: #047857; color: white; border: 0; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">Reload Application</button>
+      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button onclick="window.location.reload(true)" style="background: #047857; color: white; border: 0; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">Fresh Reload</button>
+        <button onclick="localStorage.clear(); sessionStorage.clear(); window.location.href='/login'" style="background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">Clear Cache & Go to Login</button>
+      </div>
     </div>`;
   }
 });

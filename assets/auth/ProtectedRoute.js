@@ -6,7 +6,10 @@ export async function requireAuthenticatedUser() {
     user = await fetchCurrentSessionUser();
   }
   if (!user) {
-    window.location.replace("/login");
+    if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+      sessionStorage.setItem("cng_return_to", window.location.pathname);
+      window.location.replace("/login");
+    }
     return null;
   }
   return user;
