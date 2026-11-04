@@ -99,7 +99,30 @@ async function onLogin(credentials) {
 }
 
 async function onRegister(userData) {
-  await register(userData);
+  const result = await register(userData);
+  if (result?.needsConfirmation) {
+    const authRoot = document.getElementById(AUTH_ID);
+    if (authRoot) {
+      authRoot.innerHTML = `
+        <main class="auth-card" style="text-align: center;">
+          <div class="auth-brand">CNG Deal Desk</div>
+          <div style="margin: 20px 0; display: inline-flex; padding: 16px; background: #ecfdf5; border-radius: 50%; color: #047857;">
+            <svg style="width: 36px; height: 36px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <h1 id="auth-title">Verify your email</h1>
+          <p class="auth-subtitle" style="margin-top: 8px;">Account created! A confirmation email was sent to <strong>${userData.email}</strong>.<br>Please confirm your email to sign in.</p>
+          <div style="margin-top: 24px; display: grid; gap: 10px;">
+            <a href="/login" class="auth-submit" style="display: flex; align-items: center; justify-content: center; text-decoration: none;">Proceed to Sign in</a>
+          </div>
+        </main>
+      `;
+      authRoot.querySelector("a").addEventListener("click", (e) => {
+        e.preventDefault();
+        navigate("/login");
+      });
+    }
+    return;
+  }
   const returnTo = sessionStorage.getItem("cng_return_to") || "/";
   sessionStorage.removeItem("cng_return_to");
   window.location.replace(returnTo);

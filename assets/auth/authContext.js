@@ -60,6 +60,23 @@ export async function fetchCurrentSessionUser() {
   }
 }
 
+export async function resendConfirmationEmail(email) {
+  if (!email || !email.includes("@")) {
+    throw new Error("Enter a valid email address.");
+  }
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: email.trim(),
+  });
+  if (error) {
+    if (error.code === "over_email_send_rate_limit" || error.message?.includes("rate limit")) {
+      throw new Error("Email send rate limit reached. Please wait a few minutes or confirm your user in the Supabase Dashboard.");
+    }
+    throw new Error(error.message || "Could not resend confirmation email.");
+  }
+  return true;
+}
+
 export async function login(credentials) {
   if (!credentials.email || !credentials.password) {
     throw new Error("Email and password are required.");
@@ -71,8 +88,13 @@ export async function login(credentials) {
   });
 
   if (error) {
-    if (error.message.includes("Invalid login credentials")) {
+    if (error.message.includes("Invalid login credentials") || error.code === "invalid_credentials") {
       throw new Error("Email or password is incorrect.");
+    }
+    if (error.message.includes("Email not confirmed") || error.code === "email_not_confirmed") {
+      const err = new Error("Email not confirmed. Please check your inbox or confirm the user in Supabase.");
+      err.code = "email_not_confirmed";
+      throw err;
     }
     throw new Error(error.message || "Failed to sign in.");
   }
@@ -107,11 +129,22 @@ export async function register(userData) {
   });
 
   if (error) {
+    if (error.code === "over_email_send_rate_limit" || error.message?.includes("rate limit")) {
+      throw new Error("Supabase email rate limit reached. Please disable 'Confirm email' in Supabase Dashboard -> Auth -> Providers -> Email.");
+    }
     throw new Error(error.message || "Registration failed.");
   }
 
+  if (!data?.session && data?.user) {
+    return {
+      user: data.user,
+      needsConfirmation: true,
+      message: "Registration successful! Please confirm your email before signing in.",
+    };
+  }
+
   const user = await fetchCurrentSessionUser();
-  return user || data.user;
+  return { user: user || data?.user, needsConfirmation: false };
 }
 
 export async function logout() {

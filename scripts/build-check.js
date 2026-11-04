@@ -31,6 +31,7 @@ checkFile("package.json", "Package Manifest");
 // 2. Verify Supabase Migrations
 checkFile("supabase/migrations/20261104000001_initial_schema.sql", "Supabase Initial Schema Migration");
 checkFile("supabase/migrations/20261104000002_seed_data.sql", "Supabase Seed Data Migration");
+checkFile("supabase/migrations/20261104000003_auto_confirm_users.sql", "Supabase Auto-Confirm Migration");
 
 // 3. Verify JavaScript Assets & Modules
 checkFile("assets/supabaseClient.js", "Supabase JavaScript Client");

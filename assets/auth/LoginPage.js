@@ -1,4 +1,4 @@
-import { resetPassword } from "./authContext.js";
+import { resetPassword, resendConfirmationEmail } from "./authContext.js";
 
 export function renderLoginPage(container, { onLogin, onRegister }) {
   container.innerHTML = `
@@ -28,12 +28,42 @@ export function renderLoginPage(container, { onLogin, onRegister }) {
     button.disabled = true;
     button.textContent = "Signing in…";
     error.textContent = "";
+
+    const oldResend = form.querySelector("#auth-resend-confirm");
+    if (oldResend) oldResend.remove();
+
     try {
       await onLogin({ email: data.get("email"), password: data.get("password") });
     } catch (reason) {
+      error.style.color = "#b91c1c";
       error.textContent = reason.message || "Unable to sign in.";
       button.disabled = false;
       button.textContent = "Sign in";
+
+      if (reason.code === "email_not_confirmed" || reason.message?.includes("Email not confirmed")) {
+        const resendBtn = document.createElement("button");
+        resendBtn.id = "auth-resend-confirm";
+        resendBtn.type = "button";
+        resendBtn.textContent = "Resend confirmation email";
+        resendBtn.style.cssText = "margin-top: 8px; width: 100%; min-height: 38px; background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; border-radius: 8px; font: 600 13px system-ui, sans-serif; cursor: pointer;";
+        resendBtn.addEventListener("click", async () => {
+          const emailVal = form.querySelector("input[name='email']").value;
+          resendBtn.disabled = true;
+          resendBtn.textContent = "Sending confirmation link…";
+          try {
+            await resendConfirmationEmail(emailVal);
+            error.style.color = "#047857";
+            error.textContent = "Confirmation link resent! Check your inbox.";
+            resendBtn.remove();
+          } catch (err) {
+            error.style.color = "#b91c1c";
+            error.textContent = err.message || "Failed to resend confirmation email.";
+            resendBtn.disabled = false;
+            resendBtn.textContent = "Resend confirmation email";
+          }
+        });
+        error.after(resendBtn);
+      }
     }
   });
 
