@@ -170,14 +170,19 @@ initialize().catch((error) => {
   console.error("Authentication initialization failed.", {
     code: error instanceof Error ? error.name : "UNKNOWN_ERROR",
     message: error?.message,
+    stack: error instanceof Error ? error.stack : undefined,
     timestamp: Date.now(),
   });
   const root = document.getElementById(ROOT_ID);
   if (root) {
     root.hidden = false;
-    root.innerHTML = `<div style="padding: 32px; font-family: sans-serif; text-align: center; color: #b91c1c;">
-      <h2>Connection Error</h2>
-      <p>Could not connect to authentication services. Please check your network and refresh.</p>
+    root.innerHTML = `<div style="padding: 40px; font-family: system-ui, sans-serif; text-align: center; color: #0f172a;">
+      <div style="display: inline-block; padding: 12px; background: #fee2e2; border-radius: 50%; color: #b91c1c; margin-bottom: 16px;">
+        <svg style="width: 32px; height: 32px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+      <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 8px;">Initialization Notice</h2>
+      <p style="color: #64748b; font-size: 14px; max-width: 440px; margin: 0 auto 20px;">${error?.message || "Please reload to reconnect."}</p>
+      <button onclick="window.location.reload()" style="background: #047857; color: white; border: 0; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">Reload Application</button>
     </div>`;
   }
 });

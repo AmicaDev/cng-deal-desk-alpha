@@ -18,7 +18,9 @@ dist/
 build/
 .output/
 
-# Editor and OS files
+# Scratch and temporary directories
+scratch/
+.system_generated/
 .DS_Store
 Thumbs.db
 .vscode/

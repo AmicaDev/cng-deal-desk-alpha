@@ -44,6 +44,28 @@ checkFile("assets/auth/ProtectedRoute.js", "Route Guard");
 checkFile("assets/desk-CXHNcONN.js", "Core Domain Rules & Calculations");
 checkFile("assets/index-A159RRyL.js", "Compiled React App Bundle");
 
+// 3.1 JavaScript Syntax Verification
+console.log("\nVerifying JavaScript syntax across all bundles...");
+import { execSync } from "node:child_process";
+const jsFilesToCheck = [
+  "assets/index-A159RRyL.js",
+  "assets/auth/entry.js",
+  "assets/auth/authContext.js",
+  "assets/supabaseClient.js",
+  "assets/supabaseRepository.js",
+  "assets/migrationUtility.js",
+];
+
+for (const f of jsFilesToCheck) {
+  try {
+    execSync(`node -c "${path.join(root, f)}"`, { stdio: "pipe" });
+    console.log(`[PASS] Syntax valid: ${f}`);
+  } catch (err) {
+    console.error(`[FAIL] Syntax error in ${f}:`, err.message);
+    hasErrors = true;
+  }
+}
+
 // 4. Audit for Insecure Bypasses & Leaked Secrets
 console.log("\nAuditing bundle for insecure auth bypasses and secret leaks...");
 const indexContent = fs.readFileSync(path.join(root, "assets/index-A159RRyL.js"), "utf8");
